@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoNazorat</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body{
+    margin:0;
+    font-family:Poppins;
+    background:#f4f6f9;
+}
+header{
+    background:#2e7d32;
+    color:white;
+    padding:15px;
+    text-align:center;
+}
+.container{
+    padding:20px;
+}
+.card{
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.1);
+    margin-bottom:20px;
+}
+button{
+    background:#2e7d32;
+    color:white;
+    border:none;
+    padding:10px 15px;
+    border-radius:5px;
+    cursor:pointer;
+}
+button:hover{
+    background:#1b5e20;
+}
+input, select{
+    width:100%;
+    padding:8px;
+    margin:5px 0 15px 0;
+}
+.stats{
+    display:flex;
+    gap:20px;
+    flex-wrap:wrap;
+}
+.stat-box{
+    flex:1;
+    background:#66bb6a;
+    color:white;
+    padding:20px;
+    border-radius:10px;
+    text-align:center;
+}
+.hidden{
+    display:none;
+}
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+th, td{
+    border:1px solid #ddd;
+    padding:8px;
+    text-align:center;
+}
+th{
+    background:#2e7d32;
+    color:white;
+}
+nav button{
+    margin-right:10px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>?? EcoNazorat</h1>
+<p>Tabiatni asrash — kelajakni asrash</p>
+</header>
+
+<div class="container">
+
+<!-- LOGIN -->
+<div id="loginPage" class="card">
+<h2>Tizimga kirish</h2>
+<input type="text" id="username" placeholder="Tashkilot nomi">
+<select id="role">
+<option value="Tashkilot">Tashkilot</option>
+<option value="Nazoratchi">Nazoratchi</option>
+<option value="Vazirlik">Vazirlik</option>
+</select>
+<input type="password" placeholder="Parol">
+<button onclick="login()">Kirish</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="hidden">
+
+<nav>
+<button onclick="showSection('home')">Dashboard</button>
+<button onclick="showSection('add')">Daraxt qo‘shish</button>
+<button onclick="showSection('report')">Hisobot</button>
+<button onclick="logout()">Chiqish</button>
+</nav>
+
+<div id="homeSection" class="card">
+<h2>Statistika</h2>
+<div class="stats">
+<div class="stat-box">
+<h3 id="totalTrees">0</h3>
+<p>Jami daraxt</p>
+</div>
+<div class="stat-box">
+<h3 id="goodTrees">0</h3>
+<p>Yaxshi</p>
+</div>
+<div class="stat-box">
+<h3 id="needCareTrees">0</h3>
+<p>Parvarish talab</p>
+</div>
+<div class="stat-box">
+<h3 id="deadTrees">0</h3>
+<p>Qurigan</p>
+</div>
+</div>
+
+<canvas id="treeChart"></canvas>
+</div>
+
+<!-- ADD TREE -->
+<div id="addSection" class="card hidden">
+<h2>Daraxt qo‘shish</h2>
+<input type="text" id="type" placeholder="Daraxt turi">
+<input type="date" id="date">
+<select id="status">
+<option value="Yaxshi">Yaxshi</option>
+<option value="Parvarish talab">Parvarish talab</option>
+<option value="Qurigan">Qurigan</option>
+</select>
+<input type="text" id="location" placeholder="Joylashuv (lat, lng)">
+<button onclick="addTree()">Saqlash</button>
+</div>
+
+<!-- REPORT -->
+<div id="reportSection" class="card hidden">
+<h2>Hisobot</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Turi</th>
+<th>Sana</th>
+<th>Holati</th>
+<th>Joylashuv</th>
+</tr>
+</thead>
+<tbody id="reportTable"></tbody>
+</table>
+<button onclick="downloadPDF()">PDF yuklab olish</button>
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+let trees = JSON.parse(localStorage.getItem("trees")) || [];
+
+function login(){
+document.getElementById("loginPage").classList.add("hidden");
+document.getElementById("dashboard").classList.remove("hidden");
+updateDashboard();
+}
+
+function logout(){
+location.reload();
+}
+
+function showSection(section){
+document.getElementById("homeSection").classList.add("hidden");
+document.getElementById("addSection").classList.add("hidden");
+document.getElementById("reportSection").classList.add("hidden");
+
+if(section === "home") document.getElementById("homeSection").classList.remove("hidden");
+if(section === "add") document.getElementById("addSection").classList.remove("hidden");
+if(section === "report"){
+document.getElementById("reportSection").classList.remove("hidden");
+loadReport();
+}
+}
+
+function addTree(){
+let type = document.getElementById("type").value;
+let date = document.getElementById("date").value;
+let status = document.getElementById("status").value;
+let location = document.getElementById("location").value;
+
+if(type === "" || date === ""){
+alert("Iltimos barcha maydonlarni to‘ldiring!");
+return;
+}
+
+trees.push({
+id: trees.length + 1,
+type,
+date,
+status,
+location
+});
+
+localStorage.setItem("trees", JSON.stringify(trees));
+
+alert("Daraxt qo‘shildi!");
+updateDashboard();
+}
+
+function updateDashboard(){
+
+let total = trees.length;
+let good = trees.filter(t=>t.status==="Yaxshi").length;
+let care = trees.filter(t=>t.status==="Parvarish talab").length;
+let dead = trees.filter(t=>t.status==="Qurigan").length;
+
+document.getElementById("totalTrees").innerText = total;
+document.getElementById("goodTrees").innerText = good;
+document.getElementById("needCareTrees").innerText = care;
+document.getElementById("deadTrees").innerText = dead;
+
+new Chart(document.getElementById("treeChart"),{
+type:"bar",
+data:{
+labels:["Yaxshi","Parvarish talab","Qurigan"],
+datasets:[{
+label:"Daraxt holati",
+data:[good,care,dead],
+backgroundColor:["#2e7d32","#f9a825","#c62828"]
+}]
+}
+});
+}
+
+function loadReport(){
+let table = document.getElementById("reportTable");
+table.innerHTML="";
+trees.forEach(t=>{
+table.innerHTML += `
+<tr>
+<td>${t.id}</td>
+<td>${t.type}</td>
+<td>${t.date}</td>
+<td>${t.status}</td>
+<td>${t.location}</td>
+</tr>`;
+});
+}
+
+function downloadPDF(){
+alert("Demo versiya: PDF generatsiya backend orqali ishlaydi.");
+}
+
+</script>
+
+</body>
+</html>
