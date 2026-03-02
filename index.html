@@ -4,58 +4,84 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EcoNazorat</title>
-
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 body{margin:0;font-family:Poppins;background:#f4f6f9;}
 header{background:#2e7d32;color:white;padding:15px;text-align:center;}
 .container{padding:20px;}
 .card{background:white;padding:20px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.1);margin-bottom:20px;}
-button{background:#2e7d32;color:white;border:none;padding:6px 10px;border-radius:5px;cursor:pointer;margin:2px;}
+button{background:#2e7d32;color:white;border:none;padding:8px 12px;border-radius:5px;cursor:pointer;margin:2px;}
 button:hover{background:#1b5e20;}
 input,select{width:100%;padding:8px;margin:5px 0 15px 0;}
+.stats{display:flex;gap:15px;flex-wrap:wrap;}
+.stat-box{flex:1;background:#66bb6a;color:white;padding:20px;border-radius:10px;text-align:center;}
 .hidden{display:none;}
 table{width:100%;border-collapse:collapse;}
-th,td{border:1px solid #ddd;padding:6px;text-align:center;font-size:13px;}
+th,td{border:1px solid #ddd;padding:6px;text-align:center;font-size:14px;}
 th{background:#2e7d32;color:white;}
-img{width:60px;border-radius:5px;}
+img{width:60px;border-radius:6px;}
+nav button{margin-right:5px;}
 </style>
 </head>
 <body>
 
 <header>
 <h1>🌳 EcoNazorat</h1>
+<p>Tabiatni asrash — kelajakni asrash</p>
 </header>
 
 <div class="container">
 
+<!-- LOGIN -->
 <div id="loginPage" class="card">
-<h2>Kirish</h2>
+<h2>Tizimga kirish</h2>
 <input type="text" id="username" placeholder="Tashkilot nomi">
 <select id="role">
 <option value="Tashkilot">Tashkilot</option>
+<option value="Nazoratchi">Nazoratchi</option>
 <option value="Vazirlik">Vazirlik</option>
 </select>
 <button onclick="login()">Kirish</button>
 </div>
 
+<!-- DASHBOARD -->
 <div id="dashboard" class="hidden">
 
+<nav>
+<button onclick="showSection('home')">Dashboard</button>
 <button onclick="showSection('add')" id="addBtn">Daraxt qo‘shish</button>
 <button onclick="showSection('report')">Hisobot</button>
 <button onclick="logout()">Chiqish</button>
+</nav>
 
+<!-- STATISTIKA -->
+<div id="homeSection" class="card">
+<h2>Statistika</h2>
+<div class="stats">
+<div class="stat-box"><h3 id="totalTrees">0</h3>Jami</div>
+<div class="stat-box"><h3 id="goodTrees">0</h3>Yaxshi</div>
+<div class="stat-box"><h3 id="careTrees">0</h3>Parvarish</div>
+<div class="stat-box"><h3 id="deadTrees">0</h3>Qurigan</div>
+</div>
+</div>
+
+<!-- ADD -->
 <div id="addSection" class="card hidden">
 <h2>Daraxt qo‘shish</h2>
 <input type="text" id="type" placeholder="Daraxt turi">
 <input type="date" id="date">
+<select id="status">
+<option value="Yaxshi">Yaxshi</option>
+<option value="Parvarish talab">Parvarish talab</option>
+<option value="Qurigan">Qurigan</option>
+</select>
 <input type="text" id="location" placeholder="41.3111, 69.2797">
 <input type="file" id="imageInput" accept="image/*">
 <button onclick="addTree()">Saqlash</button>
 </div>
 
+<!-- REPORT -->
 <div id="reportSection" class="card hidden">
 <h2>Hisobot</h2>
 <table>
@@ -63,7 +89,11 @@ img{width:60px;border-radius:5px;}
 <tr>
 <th>ID</th>
 <th>Turi</th>
+<th>Sana</th>
 <th>Holati</th>
+<th>Joylashuv</th>
+<th>Rasm</th>
+<th>Xarita</th>
 <th>Ruxsat</th>
 <th>Amal</th>
 </tr>
@@ -77,110 +107,87 @@ img{width:60px;border-radius:5px;}
 
 <script>
 
-const { jsPDF } = window.jspdf;
-
 let role="";
 let trees=JSON.parse(localStorage.getItem("trees"))||[];
 
 function login(){
+let username=document.getElementById("username").value;
 role=document.getElementById("role").value;
+if(username===""){alert("Nom kiriting");return;}
 document.getElementById("loginPage").classList.add("hidden");
 document.getElementById("dashboard").classList.remove("hidden");
 if(role!=="Tashkilot"){document.getElementById("addBtn").style.display="none";}
+updateDashboard();
 }
 
 function logout(){location.reload();}
 
 function showSection(sec){
-document.getElementById("addSection").classList.add("hidden");
-document.getElementById("reportSection").classList.add("hidden");
+["homeSection","addSection","reportSection"].forEach(id=>document.getElementById(id).classList.add("hidden"));
+if(sec==="home")document.getElementById("homeSection").classList.remove("hidden");
 if(sec==="add")document.getElementById("addSection").classList.remove("hidden");
 if(sec==="report"){document.getElementById("reportSection").classList.remove("hidden");loadReport();}
 }
 
 function addTree(){
-let reader=new FileReader();
-let file=document.getElementById("imageInput").files[0];
+let type=document.getElementById("type").value;
+let date=document.getElementById("date").value;
+let status=document.getElementById("status").value;
+let location=document.getElementById("location").value;
+let imageFile=document.getElementById("imageInput").files[0];
 
-reader.onload=function(e){
+if(type===""||date===""||location===""){alert("To‘ldiring");return;}
+
+if(imageFile){
+let reader=new FileReader();
+reader.onload=function(e){saveTree(e.target.result);}
+reader.readAsDataURL(imageFile);
+}else{saveTree("");}
+}
+
+function saveTree(image){
 trees.push({
 id:Date.now(),
 type:document.getElementById("type").value,
 date:document.getElementById("date").value,
+status:document.getElementById("status").value,
 location:document.getElementById("location").value,
-image:e.target.result,
-status:"Faol",
-permission:"Faol",
-requestTime:null,
-approveTime:null,
-approveImage:null
+image:image,
+permission:"Faol"
 });
 localStorage.setItem("trees",JSON.stringify(trees));
 alert("Saqlandi");
-};
-
-if(file){reader.readAsDataURL(file);}
+updateDashboard();
 }
 
 function requestPermission(id){
-trees=trees.map(t=>{
-if(t.id===id){
-t.permission="Ruxsat so‘ralgan";
-t.requestTime=new Date().toLocaleString();
-}
-return t;
-});
+trees=trees.map(t=>{if(t.id===id){t.permission="Ruxsat so‘ralgan";}return t;});
 localStorage.setItem("trees",JSON.stringify(trees));
 loadReport();
 }
 
 function approvePermission(id){
-let input=document.createElement("input");
-input.type="file";
-input.accept="image/*";
-input.onchange=function(e){
-let reader=new FileReader();
-reader.onload=function(ev){
 trees=trees.map(t=>{
 if(t.id===id){
 t.permission="Tasdiqlangan";
 t.status="Kesilgan";
-t.approveTime=new Date().toLocaleString();
-t.approveImage=ev.target.result;
 }
 return t;
 });
 localStorage.setItem("trees",JSON.stringify(trees));
+updateDashboard();
 loadReport();
-};
-reader.readAsDataURL(e.target.files[0]);
-};
-input.click();
 }
 
-function generatePDF(id){
-let tree=trees.find(t=>t.id===id);
-let doc=new jsPDF();
-
-doc.text("EcoNazorat Daraxt Hisoboti",20,20);
-doc.text("ID: "+tree.id,20,30);
-doc.text("Turi: "+tree.type,20,40);
-doc.text("Ekilgan sana: "+tree.date,20,50);
-doc.text("Joylashuv: "+tree.location,20,60);
-doc.text("Holati: "+tree.status,20,70);
-doc.text("Ruxsat holati: "+tree.permission,20,80);
-doc.text("So‘ralgan vaqt: "+(tree.requestTime||"-"),20,90);
-doc.text("Tasdiqlangan vaqt: "+(tree.approveTime||"-"),20,100);
-
-if(tree.image){
-doc.addImage(tree.image,"JPEG",20,110,50,40);
+function openMap(coord){
+window.open("https://www.google.com/maps?q="+coord,"_blank");
 }
 
-if(tree.approveImage){
-doc.addImage(tree.approveImage,"JPEG",80,110,50,40);
-}
-
-doc.save("Daraxt_"+tree.id+".pdf");
+function updateDashboard(){
+document.getElementById("totalTrees").innerText=trees.length;
+document.getElementById("goodTrees").innerText=trees.filter(t=>t.status==="Yaxshi").length;
+document.getElementById("careTrees").innerText=trees.filter(t=>t.status==="Parvarish talab").length;
+document.getElementById("deadTrees").innerText=trees.filter(t=>t.status==="Qurigan").length;
 }
 
 function loadReport(){
@@ -191,16 +198,21 @@ table.innerHTML+=`
 <tr>
 <td>${t.id}</td>
 <td>${t.type}</td>
+<td>${t.date}</td>
 <td>${t.status}</td>
+<td>${t.location}</td>
+<td>${t.image?`<img src="${t.image}">`:"Yo‘q"}</td>
+<td><button onclick="openMap('${t.location}')">Xarita</button></td>
 <td>${t.permission}</td>
 <td>
-${role==="Tashkilot"&&t.permission==="Faol"?`<button onclick="requestPermission(${t.id})">Ruxsat</button>`:""}
+${role==="Tashkilot"&&t.permission==="Faol"?`<button onclick="requestPermission(${t.id})">Ruxsat so‘rash</button>`:""}
 ${role==="Vazirlik"&&t.permission==="Ruxsat so‘ralgan"?`<button onclick="approvePermission(${t.id})">Tasdiqlash</button>`:""}
-<button onclick="generatePDF(${t.id})">PDF</button>
 </td>
 </tr>`;
 });
 }
+
+updateDashboard();
 
 </script>
 
