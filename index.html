@@ -6,77 +6,23 @@
 <title>EcoNazorat</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{
-    margin:0;
-    font-family:Poppins;
-    background:#f4f6f9;
-}
-header{
-    background:#2e7d32;
-    color:white;
-    padding:15px;
-    text-align:center;
-}
-.container{
-    padding:20px;
-}
-.card{
-    background:white;
-    padding:20px;
-    border-radius:10px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.1);
-    margin-bottom:20px;
-}
-button{
-    background:#2e7d32;
-    color:white;
-    border:none;
-    padding:10px 15px;
-    border-radius:5px;
-    cursor:pointer;
-}
-button:hover{
-    background:#1b5e20;
-}
-input, select{
-    width:100%;
-    padding:8px;
-    margin:5px 0 15px 0;
-}
-.stats{
-    display:flex;
-    gap:20px;
-    flex-wrap:wrap;
-}
-.stat-box{
-    flex:1;
-    background:#66bb6a;
-    color:white;
-    padding:20px;
-    border-radius:10px;
-    text-align:center;
-}
-.hidden{
-    display:none;
-}
-table{
-    width:100%;
-    border-collapse:collapse;
-}
-th, td{
-    border:1px solid #ddd;
-    padding:8px;
-    text-align:center;
-}
-th{
-    background:#2e7d32;
-    color:white;
-}
-nav button{
-    margin-right:10px;
-}
+body{margin:0;font-family:Poppins;background:#f4f6f9;}
+header{background:#2e7d32;color:white;padding:15px;text-align:center;}
+.container{padding:20px;}
+.card{background:white;padding:20px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.1);margin-bottom:20px;}
+button{background:#2e7d32;color:white;border:none;padding:10px 15px;border-radius:5px;cursor:pointer;}
+button:hover{background:#1b5e20;}
+input,select{width:100%;padding:8px;margin:5px 0 15px 0;}
+.stats{display:flex;gap:20px;flex-wrap:wrap;}
+.stat-box{flex:1;background:#66bb6a;color:white;padding:20px;border-radius:10px;text-align:center;}
+.hidden{display:none;}
+table{width:100%;border-collapse:collapse;}
+th,td{border:1px solid #ddd;padding:8px;text-align:center;}
+th{background:#2e7d32;color:white;}
+nav button{margin-right:10px;}
 </style>
 </head>
 
@@ -109,33 +55,25 @@ nav button{
 <button onclick="showSection('home')">Dashboard</button>
 <button onclick="showSection('add')" id="addBtn">Daraxt qo‘shish</button>
 <button onclick="showSection('report')">Hisobot</button>
+<button onclick="showSection('mapSection')">Xarita</button>
 <button onclick="logout()">Chiqish</button>
 </nav>
 
 <!-- HOME -->
 <div id="homeSection" class="card">
 <h2>Statistika</h2>
+
 <div class="stats">
-<div class="stat-box">
-<h3 id="totalTrees">0</h3>
-<p>Jami daraxt</p>
-</div>
-<div class="stat-box">
-<h3 id="goodTrees">0</h3>
-<p>Yaxshi</p>
-</div>
-<div class="stat-box">
-<h3 id="careTrees">0</h3>
-<p>Parvarish talab</p>
-</div>
-<div class="stat-box">
-<h3 id="deadTrees">0</h3>
-<p>Qurigan</p>
-</div>
-</div>
+<div class="stat-box"><h3 id="totalTrees">0</h3><p>Jami</p></div>
+<div class="stat-box"><h3 id="goodTrees">0</h3><p>Yaxshi</p></div>
+<div class="stat-box"><h3 id="careTrees">0</h3><p>Parvarish</p></div>
+<div class="stat-box"><h3 id="deadTrees">0</h3><p>Qurigan</p></div>
 </div>
 
-<!-- ADD TREE -->
+<canvas id="treeChart"></canvas>
+</div>
+
+<!-- ADD -->
 <div id="addSection" class="card hidden">
 <h2>Daraxt qo‘shish</h2>
 <input type="text" id="type" placeholder="Daraxt turi">
@@ -145,7 +83,7 @@ nav button{
 <option value="Parvarish talab">Parvarish talab</option>
 <option value="Qurigan">Qurigan</option>
 </select>
-<input type="text" id="location" placeholder="Joylashuv (41.3111, 69.2797)">
+<input type="text" id="location" placeholder="Joylashuv (erkin matn)">
 <button onclick="addTree()">Saqlash</button>
 </div>
 
@@ -155,18 +93,18 @@ nav button{
 <table>
 <thead>
 <tr>
-<th>ID</th>
-<th>Turi</th>
-<th>Sana</th>
-<th>Holati</th>
-<th>Joylashuv</th>
-<th>Ruxsat</th>
-<th>Amal</th>
+<th>ID</th><th>Turi</th><th>Sana</th><th>Holati</th><th>Joylashuv</th>
 </tr>
 </thead>
 <tbody id="reportTable"></tbody>
 </table>
-<button onclick="downloadPDF()">PDF yuklab olish</button>
+</div>
+
+<!-- MAP DEMO SECTION -->
+<div id="mapSection" class="card hidden">
+<h2>Xarita bo‘limi</h2>
+<p>Bu demo versiyada xarita moduli keyingi bosqichda Google Map yoki GIS tizim bilan ulanadi.</p>
+<p>Hozircha barcha daraxt joylashuvlari hisobot bo‘limida ko‘rsatiladi.</p>
 </div>
 
 </div>
@@ -174,158 +112,91 @@ nav button{
 
 <script>
 
-let role = "";
 let trees = JSON.parse(localStorage.getItem("trees")) || [];
+let role="";
+let chart;
 
 function login(){
-let username = document.getElementById("username").value;
-role = document.getElementById("role").value;
+let username=document.getElementById("username").value;
+role=document.getElementById("role").value;
 
-if(username === ""){
-alert("Tashkilot nomini kiriting!");
-return;
-}
+if(username===""){alert("Tashkilot nomini kiriting!");return;}
 
 document.getElementById("loginPage").classList.add("hidden");
 document.getElementById("dashboard").classList.remove("hidden");
 
-if(role !== "Tashkilot"){
+if(role!=="Tashkilot"){
 document.getElementById("addBtn").style.display="none";
 }
 
 updateDashboard();
 }
 
-function logout(){
-location.reload();
-}
+function logout(){location.reload();}
 
 function showSection(section){
 document.getElementById("homeSection").classList.add("hidden");
 document.getElementById("addSection").classList.add("hidden");
 document.getElementById("reportSection").classList.add("hidden");
+document.getElementById("mapSection").classList.add("hidden");
 
-if(section==="home") document.getElementById("homeSection").classList.remove("hidden");
-if(section==="add") document.getElementById("addSection").classList.remove("hidden");
-if(section==="report"){
-document.getElementById("reportSection").classList.remove("hidden");
-loadReport();
-}
-}
+document.getElementById(section).classList.remove("hidden");
 
-function validateCoordinates(coord){
-let regex = /^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/;
-return regex.test(coord);
+if(section==="report") loadReport();
 }
 
 function addTree(){
-let type = document.getElementById("type").value;
-let date = document.getElementById("date").value;
-let status = document.getElementById("status").value;
-let location = document.getElementById("location").value;
+let type=document.getElementById("type").value;
+let date=document.getElementById("date").value;
+let status=document.getElementById("status").value;
+let location=document.getElementById("location").value;
 
-if(type==="" || date==="" || location===""){
-alert("Barcha maydonlarni to‘ldiring!");
-return;
-}
+if(type===""||date===""){alert("To‘ldiring!");return;}
 
-if(new Date(date) > new Date()){
-alert("Sana kelajak bo‘lishi mumkin emas!");
-return;
-}
+trees.push({id:Date.now(),type,date,status,location});
+localStorage.setItem("trees",JSON.stringify(trees));
 
-if(!validateCoordinates(location)){
-alert("Koordinata noto‘g‘ri! Masalan: 41.3111, 69.2797");
-return;
-}
-
-trees.push({
-id: Date.now(),
-type,
-date,
-status,
-location,
-permission:"Faol"
-});
-
-localStorage.setItem("trees", JSON.stringify(trees));
-alert("Daraxt qo‘shildi!");
 updateDashboard();
-}
-
-function requestPermission(id){
-trees = trees.map(t=>{
-if(t.id===id){
-t.permission="Ruxsat so‘ralgan";
-}
-return t;
-});
-localStorage.setItem("trees", JSON.stringify(trees));
-loadReport();
-}
-
-function approvePermission(id){
-trees = trees.map(t=>{
-if(t.id===id){
-t.permission="Tasdiqlangan";
-t.status="Kesilgan";
-}
-return t;
-});
-localStorage.setItem("trees", JSON.stringify(trees));
-updateDashboard();
-loadReport();
+alert("Qo‘shildi!");
 }
 
 function updateDashboard(){
-let total = trees.length;
-let good = trees.filter(t=>t.status==="Yaxshi").length;
-let care = trees.filter(t=>t.status==="Parvarish talab").length;
-let dead = trees.filter(t=>t.status==="Qurigan").length;
+let total=trees.length;
+let good=trees.filter(t=>t.status==="Yaxshi").length;
+let care=trees.filter(t=>t.status==="Parvarish talab").length;
+let dead=trees.filter(t=>t.status==="Qurigan").length;
 
-animate("totalTrees", total);
-animate("goodTrees", good);
-animate("careTrees", care);
-animate("deadTrees", dead);
-}
+document.getElementById("totalTrees").innerText=total;
+document.getElementById("goodTrees").innerText=good;
+document.getElementById("careTrees").innerText=care;
+document.getElementById("deadTrees").innerText=dead;
 
-function animate(id, target){
-let el = document.getElementById(id);
-let count=0;
-let step = Math.ceil(target/50);
-let interval=setInterval(()=>{
-count+=step;
-if(count>=target){
-count=target;
-clearInterval(interval);
+if(chart) chart.destroy();
+
+chart=new Chart(document.getElementById("treeChart"),{
+type:"bar",
+data:{
+labels:["Yaxshi","Parvarish","Qurigan"],
+datasets:[{
+label:"Daraxt holati",
+data:[good,care,dead]
+}]
 }
-el.innerText=count;
-},20);
+});
 }
 
 function loadReport(){
 let table=document.getElementById("reportTable");
 table.innerHTML="";
-
 trees.forEach(t=>{
-table.innerHTML+=`
-<tr>
+table.innerHTML+=`<tr>
 <td>${t.id}</td>
 <td>${t.type}</td>
 <td>${t.date}</td>
 <td>${t.status}</td>
 <td>${t.location}</td>
-<td>${t.permission}</td>
-<td>
-${role==="Tashkilot" ? `<button onclick="requestPermission(${t.id})">Ruxsat</button>` : ""}
-${role==="Vazirlik" && t.permission==="Ruxsat so‘ralgan" ? `<button onclick="approvePermission(${t.id})">Tasdiqlash</button>` : ""}
-</td>
 </tr>`;
 });
-}
-
-function downloadPDF(){
-alert("Professional versiyada backend orqali PDF yaratiladi.");
 }
 
 </script>
