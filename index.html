@@ -4,86 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EcoNazorat</title>
-
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
 <style>
-body{
-    margin:0;
-    font-family:Poppins;
-    background:#f4f6f9;
-}
-header{
-    background:#2e7d32;
-    color:white;
-    padding:15px;
-    text-align:center;
-}
-.container{
-    padding:20px;
-}
-.card{
-    background:white;
-    padding:20px;
-    border-radius:10px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.1);
-    margin-bottom:20px;
-}
-button{
-    background:#2e7d32;
-    color:white;
-    border:none;
-    padding:10px 15px;
-    border-radius:5px;
-    cursor:pointer;
-}
-button:hover{
-    background:#1b5e20;
-}
-input, select{
-    width:100%;
-    padding:8px;
-    margin:5px 0 15px 0;
-}
-.stats{
-    display:flex;
-    gap:20px;
-    flex-wrap:wrap;
-}
-.stat-box{
-    flex:1;
-    background:#66bb6a;
-    color:white;
-    padding:20px;
-    border-radius:10px;
-    text-align:center;
-}
-.hidden{
-    display:none;
-}
-table{
-    width:100%;
-    border-collapse:collapse;
-}
-th, td{
-    border:1px solid #ddd;
-    padding:8px;
-    text-align:center;
-}
-th{
-    background:#2e7d32;
-    color:white;
-}
-img{
-    width:60px;
-    border-radius:5px;
-}
-nav button{
-    margin-right:10px;
-}
+body{margin:0;font-family:Poppins;background:#f4f6f9;}
+header{background:#2e7d32;color:white;padding:15px;text-align:center;}
+.container{padding:20px;}
+.card{background:white;padding:20px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.1);margin-bottom:20px;}
+button{background:#2e7d32;color:white;border:none;padding:8px 12px;border-radius:5px;cursor:pointer;margin:2px;}
+button:hover{background:#1b5e20;}
+input,select{width:100%;padding:8px;margin:5px 0 15px 0;}
+.stats{display:flex;gap:15px;flex-wrap:wrap;}
+.stat-box{flex:1;background:#66bb6a;color:white;padding:20px;border-radius:10px;text-align:center;}
+.hidden{display:none;}
+table{width:100%;border-collapse:collapse;}
+th,td{border:1px solid #ddd;padding:6px;text-align:center;font-size:14px;}
+th{background:#2e7d32;color:white;}
+img{width:60px;border-radius:6px;}
+nav button{margin-right:5px;}
 </style>
 </head>
-
 <body>
 
 <header>
@@ -93,6 +33,7 @@ nav button{
 
 <div class="container">
 
+<!-- LOGIN -->
 <div id="loginPage" class="card">
 <h2>Tizimga kirish</h2>
 <input type="text" id="username" placeholder="Tashkilot nomi">
@@ -101,10 +42,10 @@ nav button{
 <option value="Nazoratchi">Nazoratchi</option>
 <option value="Vazirlik">Vazirlik</option>
 </select>
-<input type="password" placeholder="Parol">
 <button onclick="login()">Kirish</button>
 </div>
 
+<!-- DASHBOARD -->
 <div id="dashboard" class="hidden">
 
 <nav>
@@ -114,28 +55,18 @@ nav button{
 <button onclick="logout()">Chiqish</button>
 </nav>
 
+<!-- STATISTIKA -->
 <div id="homeSection" class="card">
 <h2>Statistika</h2>
 <div class="stats">
-<div class="stat-box">
-<h3 id="totalTrees">0</h3>
-<p>Jami daraxt</p>
-</div>
-<div class="stat-box">
-<h3 id="goodTrees">0</h3>
-<p>Yaxshi</p>
-</div>
-<div class="stat-box">
-<h3 id="careTrees">0</h3>
-<p>Parvarish talab</p>
-</div>
-<div class="stat-box">
-<h3 id="deadTrees">0</h3>
-<p>Qurigan</p>
-</div>
+<div class="stat-box"><h3 id="totalTrees">0</h3>Jami</div>
+<div class="stat-box"><h3 id="goodTrees">0</h3>Yaxshi</div>
+<div class="stat-box"><h3 id="careTrees">0</h3>Parvarish</div>
+<div class="stat-box"><h3 id="deadTrees">0</h3>Qurigan</div>
 </div>
 </div>
 
+<!-- ADD -->
 <div id="addSection" class="card hidden">
 <h2>Daraxt qo‘shish</h2>
 <input type="text" id="type" placeholder="Daraxt turi">
@@ -150,6 +81,7 @@ nav button{
 <button onclick="addTree()">Saqlash</button>
 </div>
 
+<!-- REPORT -->
 <div id="reportSection" class="card hidden">
 <h2>Hisobot</h2>
 <table>
@@ -175,100 +107,92 @@ nav button{
 
 <script>
 
-let role = "";
-let trees = JSON.parse(localStorage.getItem("trees")) || [];
+let role="";
+let trees=JSON.parse(localStorage.getItem("trees"))||[];
 
 function login(){
-let username = document.getElementById("username").value;
-role = document.getElementById("role").value;
-
-if(username === ""){
-alert("Tashkilot nomini kiriting!");
-return;
-}
-
+let username=document.getElementById("username").value;
+role=document.getElementById("role").value;
+if(username===""){alert("Nom kiriting");return;}
 document.getElementById("loginPage").classList.add("hidden");
 document.getElementById("dashboard").classList.remove("hidden");
-
-if(role !== "Tashkilot"){
-document.getElementById("addBtn").style.display="none";
-}
-
+if(role!=="Tashkilot"){document.getElementById("addBtn").style.display="none";}
 updateDashboard();
 }
 
-function logout(){
-location.reload();
-}
+function logout(){location.reload();}
 
-function showSection(section){
-document.getElementById("homeSection").classList.add("hidden");
-document.getElementById("addSection").classList.add("hidden");
-document.getElementById("reportSection").classList.add("hidden");
-
-if(section==="home") document.getElementById("homeSection").classList.remove("hidden");
-if(section==="add") document.getElementById("addSection").classList.remove("hidden");
-if(section==="report"){
-document.getElementById("reportSection").classList.remove("hidden");
-loadReport();
-}
+function showSection(sec){
+["homeSection","addSection","reportSection"].forEach(id=>document.getElementById(id).classList.add("hidden"));
+if(sec==="home")document.getElementById("homeSection").classList.remove("hidden");
+if(sec==="add")document.getElementById("addSection").classList.remove("hidden");
+if(sec==="report"){document.getElementById("reportSection").classList.remove("hidden");loadReport();}
 }
 
 function addTree(){
-let type = document.getElementById("type").value;
-let date = document.getElementById("date").value;
-let status = document.getElementById("status").value;
-let location = document.getElementById("location").value;
-let imageFile = document.getElementById("imageInput").files[0];
+let type=document.getElementById("type").value;
+let date=document.getElementById("date").value;
+let status=document.getElementById("status").value;
+let location=document.getElementById("location").value;
+let imageFile=document.getElementById("imageInput").files[0];
 
-if(type==="" || date==="" || location===""){
-alert("Barcha maydonlarni to‘ldiring!");
-return;
+if(type===""||date===""||location===""){alert("To‘ldiring");return;}
+
+if(imageFile){
+let reader=new FileReader();
+reader.onload=function(e){saveTree(e.target.result);}
+reader.readAsDataURL(imageFile);
+}else{saveTree("");}
 }
 
-let reader = new FileReader();
-reader.onload = function(e){
+function saveTree(image){
 trees.push({
-id: Date.now(),
-type,
-date,
-status,
-location,
-image: e.target.result,
+id:Date.now(),
+type:document.getElementById("type").value,
+date:document.getElementById("date").value,
+status:document.getElementById("status").value,
+location:document.getElementById("location").value,
+image:image,
 permission:"Faol"
 });
-localStorage.setItem("trees", JSON.stringify(trees));
-alert("Daraxt qo‘shildi!");
+localStorage.setItem("trees",JSON.stringify(trees));
+alert("Saqlandi");
 updateDashboard();
-};
-if(imageFile){
-reader.readAsDataURL(imageFile);
-}else{
-reader.onload({target:{result:""}});
 }
+
+function requestPermission(id){
+trees=trees.map(t=>{if(t.id===id){t.permission="Ruxsat so‘ralgan";}return t;});
+localStorage.setItem("trees",JSON.stringify(trees));
+loadReport();
+}
+
+function approvePermission(id){
+trees=trees.map(t=>{
+if(t.id===id){
+t.permission="Tasdiqlangan";
+t.status="Kesilgan";
+}
+return t;
+});
+localStorage.setItem("trees",JSON.stringify(trees));
+updateDashboard();
+loadReport();
 }
 
 function openMap(coord){
-let url = "https://www.google.com/maps?q=" + coord;
-window.open(url, "_blank");
+window.open("https://www.google.com/maps?q="+coord,"_blank");
 }
 
 function updateDashboard(){
-let total = trees.length;
-let good = trees.filter(t=>t.status==="Yaxshi").length;
-let care = trees.filter(t=>t.status==="Parvarish talab").length;
-let dead = trees.filter(t=>t.status==="Qurigan").length;
-
-document.getElementById("totalTrees").innerText=total;
-document.getElementById("goodTrees").innerText=good;
-document.getElementById("careTrees").innerText=care;
-document.getElementById("deadTrees").innerText=dead;
+document.getElementById("totalTrees").innerText=trees.length;
+document.getElementById("goodTrees").innerText=trees.filter(t=>t.status==="Yaxshi").length;
+document.getElementById("careTrees").innerText=trees.filter(t=>t.status==="Parvarish talab").length;
+document.getElementById("deadTrees").innerText=trees.filter(t=>t.status==="Qurigan").length;
 }
 
 function loadReport(){
 let table=document.getElementById("reportTable");
 table.innerHTML="";
-
 trees.forEach(t=>{
 table.innerHTML+=`
 <tr>
@@ -277,13 +201,18 @@ table.innerHTML+=`
 <td>${t.date}</td>
 <td>${t.status}</td>
 <td>${t.location}</td>
-<td>${t.image ? `<img src="${t.image}">` : "Yo‘q"}</td>
+<td>${t.image?`<img src="${t.image}">`:"Yo‘q"}</td>
 <td><button onclick="openMap('${t.location}')">Xarita</button></td>
 <td>${t.permission}</td>
-<td></td>
+<td>
+${role==="Tashkilot"&&t.permission==="Faol"?`<button onclick="requestPermission(${t.id})">Ruxsat so‘rash</button>`:""}
+${role==="Vazirlik"&&t.permission==="Ruxsat so‘ralgan"?`<button onclick="approvePermission(${t.id})">Tasdiqlash</button>`:""}
+</td>
 </tr>`;
 });
 }
+
+updateDashboard();
 
 </script>
 
