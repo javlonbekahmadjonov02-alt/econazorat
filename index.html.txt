@@ -85,7 +85,7 @@ nav button{
 
 <header>
 <h1>?? EcoNazorat</h1>
-<p>Tabiatni asrash — kelajakni asrash</p>
+<p>Tabiatni asrash � kelajakni asrash</p>
 </header>
 
 <div class="container">
@@ -108,7 +108,7 @@ nav button{
 
 <nav>
 <button onclick="showSection('home')">Dashboard</button>
-<button onclick="showSection('add')">Daraxt qo‘shish</button>
+<button onclick="showSection('add')">Daraxt qo�shish</button>
 <button onclick="showSection('report')">Hisobot</button>
 <button onclick="logout()">Chiqish</button>
 </nav>
@@ -139,7 +139,7 @@ nav button{
 
 <!-- ADD TREE -->
 <div id="addSection" class="card hidden">
-<h2>Daraxt qo‘shish</h2>
+<h2>Daraxt qo�shish</h2>
 <input type="text" id="type" placeholder="Daraxt turi">
 <input type="date" id="date">
 <select id="status">
@@ -175,25 +175,11 @@ nav button{
 
 <script>
 
-let role = "";
 let trees = JSON.parse(localStorage.getItem("trees")) || [];
 
 function login(){
-let username = document.getElementById("username").value;
-role = document.getElementById("role").value;
-
-if(username === ""){
-alert("Tashkilot nomini kiriting!");
-return;
-}
-
 document.getElementById("loginPage").classList.add("hidden");
 document.getElementById("dashboard").classList.remove("hidden");
-
-if(role === "Nazoratchi"){
-document.querySelector("button[onclick=\"showSection('add')\"]").style.display="none";
-}
-
 updateDashboard();
 }
 
@@ -214,69 +200,29 @@ loadReport();
 }
 }
 
-function validateCoordinates(coord){
-let regex = /^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/;
-return regex.test(coord);
-}
-
 function addTree(){
 let type = document.getElementById("type").value;
 let date = document.getElementById("date").value;
 let status = document.getElementById("status").value;
 let location = document.getElementById("location").value;
 
-if(type === "" || date === "" || location === ""){
-alert("Barcha maydonlarni to‘ldiring!");
-return;
-}
-
-if(new Date(date) > new Date()){
-alert("Sana kelajak bo‘lishi mumkin emas!");
-return;
-}
-
-if(!validateCoordinates(location)){
-alert("Koordinata noto‘g‘ri formatda! Masalan: 41.3111, 69.2797");
+if(type === "" || date === ""){
+alert("Iltimos barcha maydonlarni to�ldiring!");
 return;
 }
 
 trees.push({
-id: Date.now(),
+id: trees.length + 1,
 type,
 date,
 status,
-location,
-permission:"Faol"
+location
 });
 
 localStorage.setItem("trees", JSON.stringify(trees));
 
-alert("Daraxt qo‘shildi!");
+alert("Daraxt qo�shildi!");
 updateDashboard();
-}
-
-function requestPermission(id){
-trees = trees.map(t=>{
-if(t.id === id){
-t.permission="Ruxsat so‘ralgan";
-}
-return t;
-});
-localStorage.setItem("trees", JSON.stringify(trees));
-loadReport();
-}
-
-function approvePermission(id){
-trees = trees.map(t=>{
-if(t.id === id){
-t.permission="Tasdiqlangan";
-t.status="Kesilgan";
-}
-return t;
-});
-localStorage.setItem("trees", JSON.stringify(trees));
-updateDashboard();
-loadReport();
 }
 
 function updateDashboard(){
@@ -286,29 +232,27 @@ let good = trees.filter(t=>t.status==="Yaxshi").length;
 let care = trees.filter(t=>t.status==="Parvarish talab").length;
 let dead = trees.filter(t=>t.status==="Qurigan").length;
 
-animateCounter("totalTrees", total);
-animateCounter("goodTrees", good);
-animateCounter("needCareTrees", care);
-animateCounter("deadTrees", dead);
+document.getElementById("totalTrees").innerText = total;
+document.getElementById("goodTrees").innerText = good;
+document.getElementById("needCareTrees").innerText = care;
+document.getElementById("deadTrees").innerText = dead;
 
+new Chart(document.getElementById("treeChart"),{
+type:"bar",
+data:{
+labels:["Yaxshi","Parvarish talab","Qurigan"],
+datasets:[{
+label:"Daraxt holati",
+data:[good,care,dead],
+backgroundColor:["#2e7d32","#f9a825","#c62828"]
+}]
 }
-
-function animateCounter(id, target){
-let element = document.getElementById(id);
-let count = 0;
-let interval = setInterval(()=>{
-count++;
-element.innerText = count;
-if(count >= target){
-clearInterval(interval);
-}
-},20);
+});
 }
 
 function loadReport(){
 let table = document.getElementById("reportTable");
 table.innerHTML="";
-
 trees.forEach(t=>{
 table.innerHTML += `
 <tr>
@@ -317,21 +261,15 @@ table.innerHTML += `
 <td>${t.date}</td>
 <td>${t.status}</td>
 <td>${t.location}</td>
-<td>${t.permission}</td>
-<td>
-${role==="Tashkilot" ? `<button onclick="requestPermission(${t.id})">Ruxsat so‘rash</button>`:""}
-${role==="Vazirlik" && t.permission==="Ruxsat so‘ralgan" ? `<button onclick="approvePermission(${t.id})">Tasdiqlash</button>`:""}
-</td>
 </tr>`;
 });
 }
 
 function downloadPDF(){
-alert("Professional versiyada PDF backend orqali yaratiladi.");
+alert("Demo versiya: PDF generatsiya backend orqali ishlaydi.");
 }
 
 </script>
 
 </body>
-
 </html>
