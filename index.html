@@ -52,9 +52,9 @@ nav button{margin-right:10px;}
 <div id="dashboard" class="hidden">
 
 <nav>
-<button onclick="showSection('home')">Dashboard</button>
-<button onclick="showSection('add')" id="addBtn">Daraxt qo‘shish</button>
-<button onclick="showSection('report')">Hisobot</button>
+<button onclick="showSection('homeSection')">Dashboard</button>
+<button onclick="showSection('addSection')" id="addBtn">Daraxt qo‘shish</button>
+<button onclick="showSection('reportSection')">Hisobot</button>
 <button onclick="showSection('mapSection')">Xarita</button>
 <button onclick="logout()">Chiqish</button>
 </nav>
@@ -83,7 +83,7 @@ nav button{margin-right:10px;}
 <option value="Parvarish talab">Parvarish talab</option>
 <option value="Qurigan">Qurigan</option>
 </select>
-<input type="text" id="location" placeholder="Joylashuv (erkin matn)">
+<input type="text" id="location" placeholder="Joylashuv">
 <button onclick="addTree()">Saqlash</button>
 </div>
 
@@ -100,11 +100,10 @@ nav button{margin-right:10px;}
 </table>
 </div>
 
-<!-- MAP DEMO SECTION -->
+<!-- MAP -->
 <div id="mapSection" class="card hidden">
 <h2>Xarita bo‘limi</h2>
-<p>Bu demo versiyada xarita moduli keyingi bosqichda Google Map yoki GIS tizim bilan ulanadi.</p>
-<p>Hozircha barcha daraxt joylashuvlari hisobot bo‘limida ko‘rsatiladi.</p>
+<p>Demo versiya. Keyingi bosqichda GIS yoki Google Map ulanadi.</p>
 </div>
 
 </div>
@@ -113,8 +112,8 @@ nav button{margin-right:10px;}
 <script>
 
 let trees = JSON.parse(localStorage.getItem("trees")) || [];
-let role="";
 let chart;
+let role="";
 
 function login(){
 let username=document.getElementById("username").value;
@@ -134,15 +133,14 @@ updateDashboard();
 
 function logout(){location.reload();}
 
-function showSection(section){
-document.getElementById("homeSection").classList.add("hidden");
-document.getElementById("addSection").classList.add("hidden");
-document.getElementById("reportSection").classList.add("hidden");
-document.getElementById("mapSection").classList.add("hidden");
+function showSection(sectionId){
+let sections=["homeSection","addSection","reportSection","mapSection"];
+sections.forEach(id=>{
+document.getElementById(id).classList.add("hidden");
+});
+document.getElementById(sectionId).classList.remove("hidden");
 
-document.getElementById(section).classList.remove("hidden");
-
-if(section==="report") loadReport();
+if(sectionId==="reportSection") loadReport();
 }
 
 function addTree(){
@@ -151,13 +149,13 @@ let date=document.getElementById("date").value;
 let status=document.getElementById("status").value;
 let location=document.getElementById("location").value;
 
-if(type===""||date===""){alert("To‘ldiring!");return;}
+if(type===""||date===""){alert("Barcha maydonlarni to‘ldiring!");return;}
 
 trees.push({id:Date.now(),type,date,status,location});
 localStorage.setItem("trees",JSON.stringify(trees));
 
 updateDashboard();
-alert("Qo‘shildi!");
+alert("Daraxt qo‘shildi!");
 }
 
 function updateDashboard(){
@@ -177,10 +175,7 @@ chart=new Chart(document.getElementById("treeChart"),{
 type:"bar",
 data:{
 labels:["Yaxshi","Parvarish","Qurigan"],
-datasets:[{
-label:"Daraxt holati",
-data:[good,care,dead]
-}]
+datasets:[{label:"Daraxt holati",data:[good,care,dead]}]
 }
 });
 }
